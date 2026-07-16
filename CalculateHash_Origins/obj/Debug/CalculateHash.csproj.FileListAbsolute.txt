@@ -5,3 +5,10 @@ C:\Users\informatica\Desktop\MapleStory Docs\Launcher\Launcher_2016\CalculateHas
 C:\Users\informatica\Desktop\MapleStory Docs\Launcher\Launcher_2016\CalculateHash_Origins\obj\Debug\CalculateHash.csproj.CoreCompileInputs.cache
 C:\Users\informatica\Desktop\MapleStory Docs\Launcher\Launcher_2016\CalculateHash_Origins\obj\Debug\CalculateHash.exe
 C:\Users\informatica\Desktop\MapleStory Docs\Launcher\Launcher_2016\CalculateHash_Origins\obj\Debug\CalculateHash.pdb
+C:\devmaple\ForgeMSLauncher-main\CalculateHash_Origins\bin\Debug\CalculateHash.exe.config
+C:\devmaple\ForgeMSLauncher-main\CalculateHash_Origins\bin\Debug\CalculateHash.exe
+C:\devmaple\ForgeMSLauncher-main\CalculateHash_Origins\bin\Debug\CalculateHash.pdb
+C:\devmaple\ForgeMSLauncher-main\CalculateHash_Origins\obj\Debug\CalculateHash.csproj.AssemblyReference.cache
+C:\devmaple\ForgeMSLauncher-main\CalculateHash_Origins\obj\Debug\CalculateHash.csproj.CoreCompileInputs.cache
+C:\devmaple\ForgeMSLauncher-main\CalculateHash_Origins\obj\Debug\CalculateHash.exe
+C:\devmaple\ForgeMSLauncher-main\CalculateHash_Origins\obj\Debug\CalculateHash.pdb

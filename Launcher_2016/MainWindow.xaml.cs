@@ -1,32 +1,41 @@
-﻿using System;
+﻿using DiscordRPC;
+using DiscordRPC.Logging;
+using System;
 using System.Collections.Generic;
-using System.Windows;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.IO;
-using System.Net;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
+using System.Net;
 using System.Runtime.InteropServices;
-using System.Security.Principal;
 using System.Security.Cryptography;
-using System.Xml;
-using System.Windows.Media.Imaging;
+using System.Security.Principal;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Documents;
+using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
+using System.Windows.Media.Effects;
+using System.Windows.Media.Imaging;
+using System.Xml;
 
 namespace Launcher_2016
 {
 
     public partial class MainWindow : Window
     {
+        private const string DiscordApplicationId = "1526875888187084941";
+        private const string DiscordLargeImageKey = "forge";
 
+        private DiscordRpcClient discordClient;
         public string server_ip = "127.0.0.1";
         public int port = 8484;
 
-        public string localhost_name = "MapleStory.exe";
-        public string server_name = "MapleOrigins";
+        public string localhost_name = "forgeMS alpha.exe";
+        public string server_name = "ForgeMS";
         public Uri website_url = new Uri("http://google.com/");
-        public Uri discord_url = new Uri("http://google.com/");
+        public Uri discord_url = new Uri("https://discord.gg/4YdxrNTntC");
         public string[] updateFiles;
         public int createBackup = 0; // 0 = false / 1 = true
         public bool force_admin = false;
@@ -60,6 +69,10 @@ namespace Launcher_2016
             }
 
             InitializeComponent();
+            InitializeDiscordRpc();
+
+
+
 
             if (iniOutput)
             {
@@ -68,7 +81,7 @@ namespace Launcher_2016
 
             label5.Content = server_name;
             ws.NavigateUri = website_url;
-            disc.NavigateUri = discord_url;
+            //disc.NavigateUri = discord_url;//
 
 
             updateFiles = new string[]
@@ -95,6 +108,37 @@ namespace Launcher_2016
             };
         }
 
+   
+        private void InitializeDiscordRpc()
+        {
+            try
+            {
+                discordClient = new DiscordRpcClient(DiscordApplicationId)
+                {
+                    Logger = new ConsoleLogger
+                    {
+                        Level = LogLevel.Warning
+                    }
+                };
+
+                discordClient.Initialize();
+
+                discordClient.SetPresence(new RichPresence
+                {
+                    Details = "Forging Their Adventure in ForgeMS.",
+                    State = "Prestige is earned. Power is forged.",
+                    Assets = new Assets
+                    {
+                        LargeImageKey = DiscordLargeImageKey,
+                        LargeImageText = "ForgeMS"
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Discord RPC Error: " + ex.Message);
+            }
+        }
         private void LoadConfig(string filePath)
         {
             if (!File.Exists(filePath))
@@ -213,6 +257,42 @@ namespace Launcher_2016
             {
                 byte[] hash = MD5.Create().ComputeHash(stream);
                 return BitConverter.ToString(hash).ToLowerInvariant().Replace("-", string.Empty);
+            }
+        }
+        private void ForgeButton_MouseEnter(object sender, MouseEventArgs e)
+        {
+            ForgeButtonImage.Opacity = 1.0;
+
+            if (ForgeButtonImage.Effect is DropShadowEffect glow)
+            {
+                glow.BlurRadius = 12;
+                glow.Opacity = 0.50;
+            }
+        }
+
+        private void ForgeButton_MouseLeave(object sender, MouseEventArgs e)
+        {
+            ForgeButtonImage.Opacity = 0.97;
+
+            if (ForgeButtonImage.Effect is DropShadowEffect glow)
+            {
+                glow.BlurRadius = 0;
+                glow.Opacity = 0;
+            }
+        }
+        private void DiscordButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                Process.Start(discord_url.ToString());
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "Could not open the ForgeMS Discord.\n\n" + ex.Message,
+                    "ForgeMS",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
         }
 
@@ -337,8 +417,12 @@ namespace Launcher_2016
             pbStatus.Value = (int)Math.Truncate(percentage);
         }
 
-        private void button1_Click(object sender, RoutedEventArgs e) {
-             StartChecks();
+        private async void button1_Click(object sender, RoutedEventArgs e)
+        {
+            string launcherDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            string exePath = Path.Combine(launcherDirectory, localhost_name);
+
+            await LaunchGameAsync(exePath);
         }
 
         private void Hyperlink_Click(object sender, RoutedEventArgs e)
@@ -481,6 +565,67 @@ namespace Launcher_2016
         private void Button_Click_1(object sender, RoutedEventArgs e)
         {
             MessageBox.Show("Developer by GabrielSin (https://github.com/albinosin/)", "About");
+        }
+        private async Task LaunchGameAsync(string exePath)
+        {
+            if (!File.Exists(exePath))
+            {
+                MessageBox.Show(
+                    "Could not find " + localhost_name + " in the launcher folder.",
+                    "ForgeMS"
+                );
+
+                return;
+            }
+
+            try
+            {
+                ProcessStartInfo startInfo = new ProcessStartInfo
+                {
+                    FileName = exePath,
+                    Arguments = server_ip + " " + port,
+                    WorkingDirectory = Path.GetDirectoryName(exePath),
+                    UseShellExecute = true,
+                    Verb = "runas"
+                };
+
+                Process gameProcess = Process.Start(startInfo);
+
+                if (gameProcess == null)
+                {
+                    throw new InvalidOperationException(
+                        "Windows did not return a game process."
+                    );
+                }
+
+                Hide();
+
+                await Task.Run(() =>
+                {
+                    gameProcess.WaitForExit();
+                });
+
+                gameProcess.Dispose();
+
+                if (discordClient != null)
+                {
+                    discordClient.ClearPresence();
+                    discordClient.Dispose();
+                    discordClient = null;
+                }
+
+                Application.Current.Shutdown();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "Could not start ForgeMS:\n\n" + ex.Message,
+                    "ForgeMS"
+                );
+
+                Show();
+                Activate();
+            }
         }
     }
 }
